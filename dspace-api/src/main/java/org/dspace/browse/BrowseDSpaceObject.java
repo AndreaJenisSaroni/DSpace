@@ -46,6 +46,13 @@ public class BrowseDSpaceObject extends BrowseItem
         return browseObject.getMetadataValue(mdString);
     }
     
+    @Override
+    public Metadatum[] getMetadataWithoutPlaceholder(String schema,
+            String element, String qualifier, String lang)
+    {
+        return getMetadata(schema, element, qualifier, lang);
+    }
+    
     public BrowsableDSpaceObject getBrowsableDSpaceObject()
     {
         return browseObject;
