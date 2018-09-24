@@ -105,6 +105,7 @@ public class MetadataImport
      * can write changes as it goes.
      *
      * @param change Whether or not to write the changes to the database
+     * @param leaveInWorkspace Whether only the workspaceitem need to be created (if true system ignore useWorkflow and workflowNotify parameter)
      * @param useWorkflow Whether the workflows should be used when creating new items
      * @param workflowNotify If the workflows should be used, whether to send notifications or not
      * @param useTemplate Use collection template if create new item
@@ -113,8 +114,9 @@ public class MetadataImport
      * @throws MetadataImportException if something goes wrong
      */
     public List<BulkEditChange> runImport(boolean change,
+                                          boolean leaveInWorkspace,
                                           boolean useWorkflow,
-                                          boolean workflowNotify,
+                                          boolean workflowNotify,                                          
                                           boolean useTemplate) throws MetadataImportException
     {
         // Store the changes
@@ -127,7 +129,10 @@ public class MetadataImport
             for (DSpaceCSVLine line : toImport)
             {
                 // Get the DSpace item to compare with
-                int id = line.getID();
+                int id = -1;
+                if(!leaveInWorkspace) {
+                    id = line.getID();
+                }
 
                 // Is there an action column?
                 if (csv.hasActions() && (!"".equals(line.getAction())) && (id == -1))
@@ -351,10 +356,19 @@ public class MetadataImport
                         collection = (Collection)HandleManager.resolveToObject(c, collectionHandle);
                         WorkspaceItem wsItem = WorkspaceItem.create(c, collection, useTemplate);
                         Item item = wsItem.getItem();
-
+                        Item templateItem = collection.getTemplateItem();
                         // Add the metadata to the item
                         for (Metadatum dcv : whatHasChanged.getAdds())
                         {
+                            if(leaveInWorkspace) {
+                                Metadatum[] toCheck = templateItem.getMetadata(dcv.schema,
+                                        dcv.element,
+                                        dcv.qualifier,
+                                        Item.ANY);
+                                if(toCheck!=null && toCheck.length>0) {
+                                    continue;
+                                }
+                            }
                             item.addMetadata(dcv.schema,
                                              dcv.element,
                                              dcv.qualifier,
@@ -363,29 +377,34 @@ public class MetadataImport
                                              dcv.authority,
                                              dcv.confidence);
                         }
-
-                        // Should the workflow be used?
-                        if(useWorkflow){
-                            if (ConfigurationManager.getProperty("workflow", "workflow.framework").equals("xmlworkflow")) {
-                                if (workflowNotify) {
-                                    XmlWorkflowManager.start(c, wsItem);
+                        
+                        if(!leaveInWorkspace) {
+                            // Should the workflow be used?
+                            if(useWorkflow){
+                                if (ConfigurationManager.getProperty("workflow", "workflow.framework").equals("xmlworkflow")) {
+                                    if (workflowNotify) {
+                                        XmlWorkflowManager.start(c, wsItem);
+                                    } else {
+                                        XmlWorkflowManager.startWithoutNotify(c, wsItem);
+                                    }
                                 } else {
-                                    XmlWorkflowManager.startWithoutNotify(c, wsItem);
-                                }
-                            } else {
-                                if (workflowNotify) {
-                                    WorkflowManager.start(c, wsItem);
-                                } else {
-                                    WorkflowManager.startWithoutNotify(c, wsItem);
+                                    if (workflowNotify) {
+                                        WorkflowManager.start(c, wsItem);
+                                    } else {
+                                        WorkflowManager.startWithoutNotify(c, wsItem);
+                                    }
                                 }
                             }
+                            else
+                            {
+                                // Install the item
+                                InstallItem.installItem(c, wsItem);
+                            }
                         }
-                        else
-                        {
-                            // Install the item
-                            InstallItem.installItem(c, wsItem);
+                        else {
+                            item.update();
                         }
-
+                        
                         // Add to extra collections
                         if (line.get("collection").size() > 0)
                         {
@@ -1233,6 +1252,7 @@ public class MetadataImport
         options.addOption("f", "file", true, "source file");
         options.addOption("e", "email", true, "email address or user id of user (required if adding new items)");
         options.addOption("s", "silent", false, "silent operation - doesn't request confirmation of changes USE WITH CAUTION");
+        options.addOption("k", "workspace", false, "workspace - adding only the workspaceitem");
         options.addOption("w", "workflow", false, "workflow - when adding new items, use collection workflow");
         options.addOption("n", "notify", false, "notify - when adding new items using a workflow, send notification emails");
         options.addOption("t", "template", false, "template - when adding new items, use the collection template (if it exists)");
@@ -1266,6 +1286,12 @@ public class MetadataImport
         }
         String filename = line.getOptionValue('f');
 
+        boolean leaveInWorkspace = false;
+        if (line.hasOption('k'))
+        {
+            leaveInWorkspace = true;
+        }
+        
         // Option to apply template to new items
         boolean useTemplate = false;        
         if (line.hasOption('t'))
@@ -1371,7 +1397,7 @@ public class MetadataImport
             // See what has changed
             try
             {
-                changes = importer.runImport(false, useWorkflow, workflowNotify, useTemplate);
+                changes = importer.runImport(false, leaveInWorkspace, useWorkflow, workflowNotify, useTemplate);
             }
             catch (MetadataImportException mie)
             {
@@ -1426,7 +1452,7 @@ public class MetadataImport
                 try
                 {
                     // Make the changes
-                    changes = importer.runImport(true, useWorkflow, workflowNotify, useTemplate);
+                    changes = importer.runImport(true, leaveInWorkspace, useWorkflow, workflowNotify, useTemplate);
                 }
                 catch (MetadataImportException mie)
                 {

@@ -243,6 +243,9 @@ j(document).ready(function() {
 %>
 	<div class="row">
 		<div class="col-sm-<%= admin_button?"7":"12" %> col-md-<%= admin_button?"8":"12" %> col-lg-<%= admin_button?"9":"12" %>">
+		<div class="alert alert-warning"><b><fmt:message key="jsp.version.notice.clone_head"/></b>		
+			<fmt:message key="jsp.version.notice.clone_help"/><a href="<%=request.getContextPath() + "/metadataclone?handle=" + handle %>"><fmt:message key="jsp.version.notice.clone_label"/></a>
+		</div>
 		<%		
 		if (newVersionAvailable)
 		   {

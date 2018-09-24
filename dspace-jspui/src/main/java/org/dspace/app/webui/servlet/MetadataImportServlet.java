@@ -127,7 +127,7 @@ public class MetadataImportServlet extends DSpaceServlet
             try
             {
                 MetadataImport mImport = new MetadataImport(context, csv);
-                List<BulkEditChange> changes = mImport.runImport(true, false, false, false);
+                List<BulkEditChange> changes = mImport.runImport(true, false, false, false, false);
 
                 // Commit the changes
                 context.commit();
@@ -205,7 +205,7 @@ public class MetadataImportServlet extends DSpaceServlet
         // Run the import
         DSpaceCSV csv = new DSpaceCSV(f, context);
         MetadataImport mImport = new MetadataImport(context, csv);
-        List<BulkEditChange> changes = mImport.runImport(false, false, false, false);
+        List<BulkEditChange> changes = mImport.runImport(false, false, false, false, false);
 
         // Store the csv lines in the session
         HttpSession session = request.getSession(true);
