@@ -21,9 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.dspace.app.cris.model.CrisConstants;
 import org.dspace.app.cris.model.OrganizationUnit;
-import org.dspace.app.cris.model.ResearchObject;
 import org.dspace.app.cris.model.jdyna.BoxOrganizationUnit;
 import org.dspace.app.cris.model.jdyna.EditTabOrganizationUnit;
 import org.dspace.app.cris.model.jdyna.OUPropertiesDefinition;
@@ -33,20 +31,18 @@ import org.dspace.app.cris.service.CrisSubscribeService;
 import org.dspace.app.cris.statistics.util.StatsConfig;
 import org.dspace.app.cris.util.ICrisHomeProcessor;
 import org.dspace.app.cris.util.ResearcherPageUtils;
-import org.dspace.app.webui.cris.metrics.ItemMetricsDTO;
 import org.dspace.app.webui.cris.util.CrisAuthorizeManager;
 import org.dspace.app.webui.util.Authenticate;
 import org.dspace.app.webui.util.JSPManager;
 import org.dspace.app.webui.util.UIUtil;
 import org.dspace.authorize.AuthorizeException;
+import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Context;
 import org.dspace.core.LogManager;
 import org.dspace.eperson.EPerson;
 import org.dspace.usage.UsageEvent;
 import org.dspace.utils.DSpace;
 import org.springframework.web.servlet.ModelAndView;
-
-import it.cilea.osd.jdyna.web.controller.SimpleDynaController;
 
 /**
  * This SpringMVC controller is used to build the ResearcherPage details page.
@@ -58,7 +54,7 @@ import it.cilea.osd.jdyna.web.controller.SimpleDynaController;
  */
 public class OUDetailsController
         extends
-        SimpleDynaController<OrganizationUnit, OUProperty, OUPropertiesDefinition, BoxOrganizationUnit, TabOrganizationUnit>
+        ACrisObjectDetailsController<OrganizationUnit, OUProperty, OUPropertiesDefinition, BoxOrganizationUnit, TabOrganizationUnit>
 {
     private CrisSubscribeService subscribeService;
     
@@ -154,33 +150,11 @@ public class OUDetailsController
         }
         
         List<ICrisHomeProcessor<OrganizationUnit>> resultProcessors = new ArrayList<ICrisHomeProcessor<OrganizationUnit>>();
-        Map<String, Object> extraTotal = new HashMap<String, Object>();
-        Map<String, ItemMetricsDTO> metricsTotal = new HashMap<String, ItemMetricsDTO>();
-        List<String> metricsTypeTotal = new ArrayList<String>();
-        for (ICrisHomeProcessor processor : processors)
-        {
-            if (OrganizationUnit.class.isAssignableFrom(processor.getClazz()))
-            {
-                processor.process(context, request, response, ou);
-                Map<String, Object> extra = (Map<String, Object>)request.getAttribute("extra");
-                if(extra!=null && !extra.isEmpty()) {
-                    Object metricsObject = extra.get("metrics");
-                    if(metricsObject!=null) {
-                        Map<String, ItemMetricsDTO> metrics = (Map<String, ItemMetricsDTO>)metricsObject;
-                        List<String> metricTypes = (List<String>)extra.get("metricTypes");
-                        if(metrics!=null && !metrics.isEmpty()) {
-                            metricsTotal.putAll(metrics);
-                        }
-                        if(metricTypes!=null && !metricTypes.isEmpty()) {
-                            metricsTypeTotal.addAll(metricTypes);
-                        }
-                    }
-                }
-            }
-        }
-        extraTotal.put("metricTypes", metricsTypeTotal);
-        extraTotal.put("metrics", metricsTotal);
-        request.setAttribute("extra", extraTotal);        
+        addMetricsInformationToRequest(request, response, ou, context, processors);
+        
+        mvc.getModel().put("exportscitations",
+                ConfigurationManager.getProperty("exportcitation.options"));
+        
         request.setAttribute("sectionid", StatsConfig.DETAILS_SECTION);
         new DSpace().getEventService().fireEvent(
                 new UsageEvent(

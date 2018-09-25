@@ -34,6 +34,27 @@ jQuery(document).ready(function() {
 												<div class="panel-body">
 <c:set var="root"><%=request.getContextPath()%></c:set>
 <c:set var="metrics" value="${extra['metrics']}" />
+<c:if test="${not empty extra['years']}">
+<div class="btn-group">
+	<button type="button" class="btn btn-link dropdown-toggle"
+		style="text-decoration: none;" data-toggle="dropdown">
+		<fmt:message
+			key="jsp.layout.dspace.detail.fieldset-legend.component.boxtitle.chooseyear">
+			<fmt:param>
+				<span class="fa fa-caret-down"></span>
+			</fmt:param>
+		</fmt:message>
+	</button>	
+	<ul class="dropdown-menu" role="menu">
+	<li><a href="?metricsyear=all"><fmt:message
+			key="jsp.layout.dspace.detail.metrics.dropdown.all.choice"/></a></li>
+	<c:forEach var="year" items="${extra['years']}">
+		<li><a href="?metricsyear=${year}">${year}</a></li>	
+	</c:forEach>
+	</ul>
+</div>
+</c:if>
+
 <div class="row">
 <c:forEach var="metricType" items="${extra['metricTypes']}">
 <c:set var="metricNameKey">

@@ -21,9 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.dspace.app.cris.model.CrisConstants;
 import org.dspace.app.cris.model.Project;
-import org.dspace.app.cris.model.ResearchObject;
 import org.dspace.app.cris.model.jdyna.BoxProject;
 import org.dspace.app.cris.model.jdyna.EditTabProject;
 import org.dspace.app.cris.model.jdyna.ProjectPropertiesDefinition;
