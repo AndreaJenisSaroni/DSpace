@@ -39,6 +39,7 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.Collections;
 
 import javax.mail.MessagingException;
 import javax.xml.parsers.DocumentBuilder;
@@ -2045,10 +2046,13 @@ public class ItemImportServiceImpl implements ItemImportService, InitializingBea
             	fileNames.put(upload.getDir().getName(), upload);
             }
         }
+        
 
         if (fileNames.size() > 0)
         {
-            return new ArrayList<>(fileNames.values());
+            List<BatchUpload> toReverse = new ArrayList<BatchUpload>(fileNames.values());
+            Collections.reverse(toReverse);
+            return toReverse;
         }
 
         return null;
