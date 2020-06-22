@@ -43,7 +43,7 @@ public class CrisMetricsUpdateListener implements SolrEventListener
 
     private static final Map<String, PopulateRanksThread> underRebuild = new HashMap<String, PopulateRanksThread>();
     
-    private static final Map<String, Map<String, Map<Integer, Double>>> metrics = new HashMap<>();
+    private static final Map<String, Map<String, Map<String, Double>>> metrics = new HashMap<>();
 
     private static final Map<String, Map<String, Map<String, ExtraInfo>>> extraInfo = new HashMap<>();
     
@@ -91,11 +91,11 @@ public class CrisMetricsUpdateListener implements SolrEventListener
                 return null;
             }            
         }
-    	Map<String, Map<Integer, Double>> m = metrics.get(coreName);
+    	Map<String, Map<String, Double>> m = metrics.get(coreName);
     	Map<Integer, String> docs = docIdToUniqueId.get(coreName);
         if (m != null && docs!=null && m.containsKey(metric))
         {
-            Map<Integer, Double> values = m.get(metric);
+            Map<String, Double> values = m.get(metric);
             if (docs.containsKey(docId)) {
                 String uniqueId = docs.get(docId);
                 if (values.containsKey(uniqueId))
@@ -178,7 +178,7 @@ public class CrisMetricsUpdateListener implements SolrEventListener
 		}
     }
 
-    public static Map<String, Map<Integer, Double>> getMetrics(String coreName)
+    public static Map<String, Map<String, Double>> getMetrics(String coreName)
     {
         return metrics.get(coreName);
     }
@@ -278,7 +278,7 @@ public class CrisMetricsUpdateListener implements SolrEventListener
 		{	
 			Integer numDocs = (Integer) searcher.getStatistics().get("numDocs");
 			Date start = new Date();
-		    Map<String, Map<Integer, Double>> metricsCopy = new HashMap<>(numDocs);
+		    Map<String, Map<String, Double>> metricsCopy = new HashMap<>(numDocs);
 		    Map<String, Map<String, ExtraInfo>> metricsRemarksCopy = new HashMap<>(numDocs);
 		    Map<Integer, String> docIdToUniqueIdCopy = new HashMap<>();
 		    Connection conn = null;
@@ -333,7 +333,7 @@ public class CrisMetricsUpdateListener implements SolrEventListener
                     Integer docId = searchIDCache.get(searchUniqueId);
 		            if (docId != null) {
 		                String key = new StringBuffer("crismetrics_").append(type.toLowerCase()).toString();
-		                Map<Integer, Double> tmpSubMap;
+		                Map<String, Double> tmpSubMap;
 		                Map<String, ExtraInfo> tmpSubRemarkMap;
 		                boolean add = false;
 		                if(metricsCopy.containsKey(key)) {
@@ -346,7 +346,7 @@ public class CrisMetricsUpdateListener implements SolrEventListener
 			                tmpSubRemarkMap = new HashMap<>();
 		                }
 		            
-		                tmpSubMap.put(docId, count);
+		                tmpSubMap.put(searchUniqueId, count);
 		                tmpSubRemarkMap.put(searchUniqueId, new ExtraInfo(remark, acqTime, startTime, endTime));
 		                docIdToUniqueIdCopy.put(docId, searchUniqueId);
 		
@@ -395,7 +395,7 @@ public class CrisMetricsUpdateListener implements SolrEventListener
 		        }
 		    }
 		    
-		    Map<String, Map<Integer, Double>> m = metrics.get(coreName);
+		    Map<String, Map<String, Double>> m = metrics.get(coreName);
 		    Map<String, Map<String, ExtraInfo>> ei = extraInfo.get(coreName);
 		    
 		    if (ei != null) {
